@@ -9,7 +9,6 @@ fetch("http://api.are.na/v2/channels/88-seoul-olympics")
             arenaData = data.contents;
 
             const header = document.querySelector('.header');
-            console.log(header);
             const currTime = document.createElement('div');
             currTime.className = 'header-time'
             header.appendChild(currTime);
@@ -55,6 +54,8 @@ fetch("http://api.are.na/v2/channels/88-seoul-olympics")
 
             time();
             date();
+
+            window.onresize = () => { location.reload(); };
 
             const title = document.querySelector('.channel-title');
             title.innerHTML = data.title;
@@ -124,9 +125,10 @@ fetch("http://api.are.na/v2/channels/88-seoul-olympics")
     
                     content.classList.add('fade-in');
                 } else {
-                    idx = parseInt(windowLocation.split(".").shift()) - 1;
-                    console.log(idx);
-                    const currData = arenaData[idx];
+                    const params = new URLSearchParams(document.location.search);
+                    const blockIdx = params.get('block');
+
+                    const currData = arenaData[blockIdx-1];
                     contentImg.src = currData.image.original.url;                
                     logo.src = '../seoul_logo.png';
                     contentTitle.innerHTML = currData.title; 
@@ -145,12 +147,31 @@ fetch("http://api.are.na/v2/channels/88-seoul-olympics")
 
             const detail = e => {
                 const idx = parseInt(e.target.className.slice(1, 3));
+
                 if (screenWidth <= 600) {
-                    console.log(`blocks/${idx+1}.html`);
-                    window.location.href = `blocks/${idx+1}.html`;
+                    let href = window.location.href;
+                    const blockUrl = `${href}block.html?block=${idx+1}`;
+                    window.location = blockUrl;
                 }
     
                 const currData = arenaData[idx];
+
+                const blockLists = document.querySelectorAll('.channel-block');
+                
+                if (screenWidth > 600) {
+                    blockLists.forEach(ele => {
+                        if (ele.classList.contains('active')) {
+                            ele.classList.remove('active');
+                        }
+                    });
+
+                    const blockClassName = e.target.className.slice(0,3);
+                    const block = document.querySelector(`.${blockClassName}`);
+                    
+                    block.classList.add('active');
+                }
+
+                
 
                 let imgHeight;
                 let imgWidth;
@@ -189,8 +210,14 @@ fetch("http://api.are.na/v2/channels/88-seoul-olympics")
                 for (let i = 0; i < arenaData.length; i++) {
                     const block = document.createElement('div');
                     block.classList.add(`i${i}`, 'channel-block');
-                    currData = arenaData[i];
 
+                    if (screenWidth > 600 && i == 0) {
+                        block.classList.add('active');
+                    }
+                    block.style.animation = `opacity .5s ease-in ${i / 2}s forwards`;
+
+
+                    currData = arenaData[i];
                     block.addEventListener("click", detail);
 
                     const sender = document.createElement('div');
@@ -227,18 +254,18 @@ fetch("http://api.are.na/v2/channels/88-seoul-olympics")
 
                     const text = document.createElement('div');
                     text.classList.add(`i${i}`, 'block-description-text');
-
-                    if (screenWidth > 600) {
-                        text.innerHTML = arenaData[i].description.slice(0, 70) + ' ...';
-                    } else {
-                        text.innerHTML = arenaData[i].description.slice(0, 55) + ' ...';
-                    }
+                    text.innerHTML = arenaData[i].description.slice(0, 40) + ' ...';
                     
                     description.appendChild(text);
-
                     blockList.append(block);
                 }
-                blockList.classList.add('fade-in');
+
+                const countDays = document.querySelector('.day-count');
+                const today = new Date();
+                const seoulOlympics = new Date('09/17/1988');
+                const differenceInTimes = today.getTime() - seoulOlympics.getTime(); 
+                const differenceInDays = Math.floor(differenceInTimes / (1000 * 3600 * 24)) + 1; 
+                countDays.innerHTML = `+${differenceInDays}`;
             }
             
         })
